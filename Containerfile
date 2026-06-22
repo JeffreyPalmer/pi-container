@@ -4,17 +4,23 @@
 # bash tool-call (find, grep, rg) available, /workspace as the
 # mount target for the respective project.
 
-FROM node:22-bookworm-slim
+# FROM node:22-bookworm-slim
+FROM rust:1-slim
+
+# get NodeJS
+COPY --from=node:22-trixie-slim /usr/local/bin /usr/local/bin
+# get NPM
+COPY --from=node:22-trixie-slim /usr/local/lib/node_modules /usr/local/lib/node_modules
 
 RUN apt-get update \
- && apt-get install -y --no-install-recommends \
-      git \
-      ripgrep \
-      ca-certificates \
-      iproute2 \
- && rm -rf /var/lib/apt/lists/*
+    && apt-get install -y --no-install-recommends \
+    git \
+    ripgrep \
+    ca-certificates \
+    iproute2 \
+    && rm -rf /var/lib/apt/lists/*
 
-RUN npm install -g @mariozechner/pi-coding-agent
+RUN npm install -g --ignore-scripts @earendil-works/pi-coding-agent
 
 ARG PI_UID=1000
 ARG PI_GID=1000

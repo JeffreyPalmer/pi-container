@@ -7,6 +7,8 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 
 container build \
-  --tag "$IMAGE_TAG" \
-  --file "$REPO_ROOT/Containerfile" \
-  "$REPO_ROOT"
+          --no-cache \
+          --progress plain \
+          --tag "$IMAGE_TAG" \
+          --file "$REPO_ROOT/Containerfile" \
+          "$REPO_ROOT"
