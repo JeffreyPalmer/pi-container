@@ -4,7 +4,10 @@
 # bash tool-call (find, grep, rg) available, /workspace as the
 # mount target for the respective project.
 
+# Original image
 # FROM node:22-bookworm-slim
+
+# For Rust development
 FROM rust:1-slim
 
 # get NodeJS

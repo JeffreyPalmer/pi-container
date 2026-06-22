@@ -1,21 +1,9 @@
-<p align="center">
-  <img src="blog-image.jpg" alt="pi coding agent in an Apple Container" width="100%">
-</p>
-
 <h1 align="center">pi-container</h1>
 
 <p align="center">
   <strong>A sovereign, npm-free local coding agent on macOS.</strong><br>
   The <code>pi</code> coding agent runs in a disposable Apple <code>container</code> micro-VM and talks to a local
   MLX-Swift model on the host — no Node, no npm, no agent binary on your work machine.
-</p>
-
-<p align="center">
-  <img src="https://img.shields.io/badge/platform-macOS%2026%20(Tahoe)%20%C2%B7%20Apple%20Silicon-black" alt="platform">
-  <img src="https://img.shields.io/badge/runtime-Apple%20container-blue" alt="runtime">
-  <img src="https://img.shields.io/badge/agent-pi--coding--agent%20%C2%B7%20Node%2022-339933" alt="agent">
-  <img src="https://img.shields.io/badge/model-gemma--4--26b%20%C2%B7%20MLX--Swift-orange" alt="model">
-  <img src="https://img.shields.io/badge/status-hands--on%20draft-yellow" alt="status">
 </p>
 
 ---
@@ -28,7 +16,7 @@ A modern coding agent reads your files, runs shell commands, and installs whatev
 - **The agent runtime is sandboxed in its own VM** — Apple `container` gives each container a lightweight VM, not shared-kernel namespaces.
 - **The host stays clean** — no Node, no npm, no `pi` binary; the agent lives only inside an image and is discarded on exit.
 
-The full step-by-step walkthrough is the article **[`en-pi-apple-container.md`](en-pi-apple-container.md)** (English companion to a German MLX-Swift writing series). The files in this repo are the runnable reference for that article — change one, change the other.
+The full step-by-step walkthrough is the article **[`en-pi-apple-container.md`](https://medium.com/@michael.hannecke/a-sovereign-coding-agent-on-macos-pi-in-an-apple-container-zero-npm-on-the-host-46f62ffade0a)** (English companion to a German MLX-Swift writing series). The files in this repo are the runnable reference for that article — change one, change the other.
 
 ## Architecture
 
@@ -42,7 +30,7 @@ The full step-by-step walkthrough is the article **[`en-pi-apple-container.md`](
 └─────────────────────────────┘        └──────────────────────────────┘
 ```
 
-- **Inference** runs on the host (it has to — no Metal/ANE in a Linux VM).
+- **Inference** runs outside of the container (on the host or elsewhere). It has to — no Metal/ANE in a Linux VM.
 - **Tool-calling sandbox** runs in the container — a clean split between model runtime and agent runtime.
 - **pi** reaches the host only over the container bridge; the gateway IP is environment-dependent and discovered at runtime, never hardcoded.
 
@@ -51,25 +39,15 @@ The full step-by-step walkthrough is the article **[`en-pi-apple-container.md`](
 - [Repository structure](#repository-structure)
 - [Prerequisites](#prerequisites)
 - [Quickstart](#quickstart)
-- [Configuration](#configuration)
 - [Troubleshooting](#troubleshooting)
-- [The article](#the-article)
-- [Notes & caveats](#notes--caveats)
 - [License](#license)
 
 ## Repository structure
 
 ```
 .
-├── en-pi-apple-container.md                      # the step-by-step article (English)
-├── blog-image.jpg                                # article / README banner
 ├── Containerfile                                 # node:22-bookworm-slim + pi installed globally
 ├── pi-config/
-│   ├── AGENTS.md                                 # global agent rules (container variant)
-│   ├── models.json                               # provider + model definition
-│   └── extensions/
-│       └── protected-paths/
-│           └── index.ts                          # tool-call guardrail for sensitive paths
 └── scripts/
     ├── build.sh                                  # container build
     └── run.sh                                    # container run with the right mounts
@@ -118,20 +96,6 @@ PROJECT_DIR=~/projects/your-repo ./scripts/run.sh --model mlx-local/gemma4-instr
 
 `--rm` discards the VM and its writable layer on exit. The host is byte-for-byte unchanged.
 
-## Configuration
-
-### Models & provider — `pi-config/models.json`
-
-Defines the `mlx-local` provider with `api: "openai-completions"` and a nested `models` array. `apiKey` is `"not-required"` (a local server needs no secret, so none can leak). Each model's `id` must be **exactly** what the server's `/v1/models` reports — here the full model path `/Users/michael/models/gemma-4-26b-a4b-it-4bit` — while `name` (`mlx-local/gemma4-instruct`) is the handle `--model` matches against. `contextWindow`/`maxTokens` are optional; omitted here, so pi's defaults (128K / 16.4K) apply — set them to your server's real limits.
-
-### Global agent rules — `pi-config/AGENTS.md`
-
-Loaded into every session as the operating contract: runs in an Apple container, host not directly reachable, file operations only affect `/workspace`, model reached only over the bridge, no external calls or telemetry without explicit instruction, and tool discipline (`read` before `edit`, `write` only for new files, no `npm install` without confirmation).
-
-### Extension — `protected-paths`
-
-A defense-in-depth backstop at `pi-config/extensions/protected-paths/index.ts`. It hooks pi's `tool_call` event and forces a confirmation (or hard-denies) for sensitive directories (`~/.ssh`, `~/.aws`, `~/.config/gcloud`, `/run/secrets`, `/etc`) and patterns (`.env`, `credentials.json`, `id_rsa`, `id_ed25519`, `*.pem`, `*.p12`) — inspecting both file-tool paths and `bash` commands. The container is the strong boundary; this is the seatbelt for the day someone widens a mount.
-
 ## Troubleshooting
 
 | Symptom | Cause & fix |
@@ -142,18 +106,6 @@ A defense-in-depth backstop at `pi-config/extensions/protected-paths/index.ts`. 
 | Files not owned by your macOS user | **Expected.** The container writes as UID 1000; your host user is typically UID 501. In the pi workflow (edits go through the `edit` tool) this is acceptable. |
 | Agent answers but never edits | **No native tool-calling.** pi has no `toolCalling` flag — it relies on the model doing OpenAI function-calling. Some instruct builds (Gemma included) may not, and silently no-op. Verify with a real session. |
 | `models.json` loads but chat fails on role/params | Some local servers reject the `developer` role or `reasoning_effort`. Add provider-level `"compat": { "supportsDeveloperRole": false, "supportsReasoningEffort": false }` (see pi's `models.md`). |
-
-## The article
-
-**[`en-pi-apple-container.md`](en-pi-apple-container.md)** is a hands-on draft for external publication. It covers, in order: why a coding agent belongs in a container, why Apple `container` over Docker on Apple Silicon, then a careful nine-step walkthrough (install `container` → verify the host model → build → discover the bridge IP → wire `models.json` → guardrails → run → smoke-test) plus troubleshooting.
-
-The code blocks in the article mirror the `Containerfile`, `pi-config/`, and `scripts/` files in this repo verbatim. **Keep them consistent** — if you change a runnable file, update the article, and vice versa.
-
-## Notes & caveats
-
-- **MLX stays on the host.** Suggestions to move inference into the container do not work — no Metal, no ANE in a Linux VM.
-- **Bridge IP is environment-dependent.** The address in `models.json` is an example default, discovered at runtime; it can vary by `container` version.
-- **macOS version matters.** Container-to-host networking is the linchpin; older macOS limits it severely.
 
 ## License
 
