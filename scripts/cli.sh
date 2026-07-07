@@ -14,17 +14,11 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 PROJECT_DIR="${PROJECT_DIR:-$(pwd)}"
 
-if [ ! -d "$PROJECT_DIR" ]; then
-  echo "PROJECT_DIR='$PROJECT_DIR' does not exist." >&2
-  exit 1
-fi
-
 container run \
-  --rm \
-  --interactive \
-  --tty \
-  --volume "$REPO_ROOT/pi-config:/home/pi/.pi" \
-  --volume "$PROJECT_DIR:/workspace" \
-  --workdir /workspace \
-  "$IMAGE_TAG" \
-  "$@"
+          --rm \
+          --interactive \
+          --tty \
+          --entrypoint /bin/bash \
+          --volume "$PROJECT_DIR:/workspace" \
+          --workdir /workspace \
+          "$IMAGE_TAG"

@@ -17,22 +17,29 @@ COPY --from=node:22-trixie-slim /usr/local/lib/node_modules /usr/local/lib/node_
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
+    curl \
     git \
     ripgrep \
     ca-certificates \
     iproute2 \
+    sbcl \
     && rm -rf /var/lib/apt/lists/*
+
+RUN curl -L https://qlot.tech/installer | sh
 
 RUN npm install -g --ignore-scripts @earendil-works/pi-coding-agent
 
 ARG PI_UID=1000
 ARG PI_GID=1000
+
 # node:22 already ships a 'node' user/group at UID/GID 1000; remove it so the
 # 'pi' user can own that id range, then create pi.
 RUN userdel --remove node 2>/dev/null || true \
- && groupdel node 2>/dev/null || true \
- && groupadd --gid ${PI_GID} pi \
- && useradd --uid ${PI_UID} --gid ${PI_GID} --create-home --shell /bin/bash pi
+    && groupdel node 2>/dev/null || true \
+    && groupadd --gid ${PI_GID} pi \
+    && useradd --uid ${PI_UID} --gid ${PI_GID} --create-home --shell /bin/bash pi \
+    && mkdir -p /home/pi/.pi \
+    && chown -R pi:pi /home/pi/.pi
 
 USER pi
 WORKDIR /workspace
