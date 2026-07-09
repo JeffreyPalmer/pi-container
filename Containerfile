@@ -15,10 +15,10 @@ COPY --from=node:22-trixie-slim /usr/local/bin /usr/local/bin
 # get NPM
 COPY --from=node:22-trixie-slim /usr/local/lib/node_modules /usr/local/lib/node_modules
 
+# Make sure to not install git - it's often abused by stupid models
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
     curl \
-    git \
     ripgrep \
     ca-certificates \
     iproute2 \
