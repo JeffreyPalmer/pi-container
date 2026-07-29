@@ -5,27 +5,31 @@
 # mount target for the respective project.
 
 # Original image
-# FROM node:22-bookworm-slim
+FROM node:22-bookworm-slim
+
+### Use the following for rust/lisp dev
 
 # For Rust development
-FROM rust:1-slim
+# FROM rust:1-slim
 
 # get NodeJS
-COPY --from=node:22-trixie-slim /usr/local/bin /usr/local/bin
+# COPY --from=node:22-trixie-slim /usr/local/bin /usr/local/bin
 # get NPM
-COPY --from=node:22-trixie-slim /usr/local/lib/node_modules /usr/local/lib/node_modules
+# COPY --from=node:22-trixie-slim /usr/local/lib/node_modules /usr/local/lib/node_modules
 
 # Make sure to not install git - it's often abused by stupid models
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
+    # iputils-ping \
     curl \
+    git \
     ripgrep \
     ca-certificates \
     iproute2 \
-    sbcl \
+    # sbcl \
     && rm -rf /var/lib/apt/lists/*
 
-RUN curl -L https://qlot.tech/installer | sh
+# RUN curl -L https://qlot.tech/installer | sh
 
 RUN npm install -g --ignore-scripts @earendil-works/pi-coding-agent
 
