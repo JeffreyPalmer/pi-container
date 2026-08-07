@@ -22,7 +22,8 @@ RUN apt-get update \
     && apt-get install -y --no-install-recommends \
     # iputils-ping \
     curl \
-    git \
+    # git \
+    jq \
     ripgrep \
     ca-certificates \
     iproute2 \
@@ -32,6 +33,8 @@ RUN apt-get update \
 # RUN curl -L https://qlot.tech/installer | sh
 
 RUN npm install -g --ignore-scripts @earendil-works/pi-coding-agent
+RUN npm install -g @beads/bd
+
 
 ARG PI_UID=1000
 ARG PI_GID=1000
