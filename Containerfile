@@ -6,6 +6,7 @@
 
 # Original image
 FROM node:22-bookworm-slim
+ENV TZ="America/Los_Angeles"
 
 ### Use the following for rust/lisp dev
 
@@ -22,7 +23,7 @@ RUN apt-get update \
     && apt-get install -y --no-install-recommends \
     # iputils-ping \
     curl \
-    # git \
+    git \
     jq \
     ripgrep \
     ca-certificates \
